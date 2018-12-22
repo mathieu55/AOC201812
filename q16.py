@@ -1,3 +1,5 @@
+import operator
+
 class testSuite():
     def __init__(self):
         self.tests=[]
@@ -9,19 +11,34 @@ class testSuite():
 
         for i in range(len(self.tests)):
             for func in fcts:
-
-                fctReturn=func(self.tests[i].before.copy(),self.tests[i].action) 
+                fctReturn=func(self.tests[i].before.copy(),self.tests[i].action)
                 if (fctReturn>self.tests[i].after)-(fctReturn<self.tests[i].after)==0:
                     results[i].append(func)
         return results
 
+    def testAllByFunc(self, fcts):
+        results=[]
+        for _ in range(len(fcts)):
+            tmp=[]
+            results.append(tmp)
+            for _ in range(len(fcts)):
+                tmp.append(0)
 
+        for test in self.tests:
+            for i,func in enumerate(fcts):
+                fctReturn=func(test.before.copy(),test.action)
+                if (fctReturn>test.after)-(fctReturn<test.after)==0:
+                    results[test.action[0]][i]+=1
+        return results
 
 class testCase():
     def __init__(self,pAction, valueBefore, valueAfter):
         self.action=pAction
         self.before=valueBefore
         self.after=valueAfter
+
+    def __repr__(self):
+        return "Op: "+str(self.action)+"\nBefore: "+str(self.before)+"\nAfter: "+str(self.after)
 
 def addr(registry,op):
     registry[op[3]]=registry[op[1]]+registry[op[2]]
@@ -76,15 +93,15 @@ def gtrr(registry,op):
     return registry
 
 def eqir(registry,op):
-    registry[op[3]]=1 if op[1]>registry[op[2]] else 0
+    registry[op[3]]=1 if op[1]==registry[op[2]] else 0
     return registry
 
 def eqri(registry,op):
-    registry[op[3]]=1 if registry[op[1]]>op[2] else 0 
+    registry[op[3]]=1 if registry[op[1]]==op[2] else 0
     return registry
 
 def eqrr(registry,op):
-    registry[op[3]]=1 if registry[op[1]]>registry[op[2]] else 0
+    registry[op[3]]=1 if registry[op[1]]==registry[op[2]] else 0
     return registry
 
 opcodes=[addr,addi,mulr,muli,banr,bani,borr,bori,setr,seti,gtir,gtri,gtrr,eqir,eqri,eqrr]
@@ -97,7 +114,7 @@ emptyLine=0
 i=0
 
 tests = testSuite()
-while emptyLine<=1:
+while emptyLine<=1: #and len(tests.tests)<=10:
     tmpLine=lines[i]
     if tmpLine=="":
         emptyLine+=1
@@ -115,10 +132,17 @@ while emptyLine<=1:
         tests.tests.append(testCase(action,before,after))  
         pass
     i+=1
-    
-results=tests.testAllByTest(opcodes)
-qty=[len(i) for i in results]
-qty3more = list(filter(lambda i: i>=3,qty))
-#465 too low
 
-print(len(qty3more))
+#skip white line
+while lines[i].strip()=="":
+    i+=1
+
+#execute the "software"
+values=[0,0,0,0]
+indexOpcode=[8,15,11,3,13,6,7,2,12,9,4,14,0,10,1,5]
+while i<len(lines):
+    op=list(map(lambda x: int(x.strip()),lines[i].split(" ")))
+    opcodes[indexOpcode[op[0]]](values,op)
+    i+=1
+
+print(values)
